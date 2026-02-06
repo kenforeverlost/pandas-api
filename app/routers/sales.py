@@ -1,21 +1,24 @@
 from fastapi import FastAPI, Query, APIRouter, Request
 
-from ..data_processing import DataExplorer
+from ..services.sales import SalesService
 
 app = FastAPI()
 router = APIRouter(prefix="/api/sales")
 
 @router.get("/summary")
 async def read_summary_data(request: Request):
-    data = DataExplorer(request.app.state.df)
+    df = request.app.state.sales_df
+    data = SalesService(df)
     return data.summary().json_response()
 
 @router.get("/kpis")
 async def read_kpis(request: Request,country: str = Query(None)):
-    data = DataExplorer(request.app.state.df)
+    df = request.app.state.sales_df
+    data = SalesService(df)
     return data.kpis(country)
 
 @router.get("")
 async def read_sales(request: Request,limit: int = Query(100, gt=0, lt=150000)):
-    data = DataExplorer(request.app.state.df,limit)
+    df = request.app.state.sales_df
+    data = SalesService(df,limit)
     return data.json_response()

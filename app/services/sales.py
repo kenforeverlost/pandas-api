@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from fastapi.responses import JSONResponse
 
-class DataExplorer:
+class SalesService:
     def __init__(self, df: pd.DataFrame, limit = 100):
         self._df_full = df
         self._df = df.head(limit)
