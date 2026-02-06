@@ -15,7 +15,7 @@ class PokemonService:
     def moves(self):
         return self
     
-    def type(self, filter, show_stats):
+    def type(self, filter):
         if not filter:
             self._df = self._df_full['Type'].value_counts().to_frame().reset_index()
         else:
