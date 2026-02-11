@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
 
     drop_cols = ["Poster_Link","Certificate"]
     imdb1000_df = pd.read_csv(DATA_PATH / "imdb-top-1000.csv").drop(columns=drop_cols).dropna(how="all").sort_index()
+    imdb1000_df['Director'] = imdb1000_df['Director'].astype("category")
     imdb1000_df['Gross'] = imdb1000_df['Gross'].str.replace(",","").fillna(0).astype(int,errors='raise')
     app.state.imdb1000_df = imdb1000_df
 
