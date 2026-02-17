@@ -1,29 +1,43 @@
 import json
 import pandas as pd
+import numpy as np
 from fastapi.responses import JSONResponse
 
-def get_generation_stats(df: pd.DataFrame):    
+def get_generation_stats(df: pd.DataFrame):
+    df["Base_HP"] = np.where(df['isBase'], df['HP'], np.nan)
+    df["Base_Attack"] = np.where(df['isBase'], df['Attack'], np.nan)
+    df["Base_Defense"] = np.where(df['isBase'], df['Defense'], np.nan)
+    df["Base_SpAtk"] = np.where(df['isBase'], df['SpAtk'], np.nan)
+    df["Base_SpDef"] = np.where(df['isBase'], df['SpDef'], np.nan)
+    df["Base_Speed"] = np.where(df['isBase'], df['Speed'], np.nan)
+
     stats_df = df.groupby("Generation").agg(
-        Count=pd.NamedAgg(column="Name",aggfunc="count"),
-        Avg_HP=pd.NamedAgg(column="HP", aggfunc="mean"),
-        Max_HP=pd.NamedAgg(column="HP", aggfunc="max"),
-        Min_HP=pd.NamedAgg(column="HP", aggfunc="min"),
-        Avg_Attack=pd.NamedAgg(column="Attack", aggfunc="mean"),
-        Max_Attack=pd.NamedAgg(column="Attack", aggfunc="max"),
-        Min_Attack=pd.NamedAgg(column="Attack", aggfunc="min"),
-        Avg_Defense=pd.NamedAgg(column="Defense", aggfunc="mean"),
-        Max_Defense=pd.NamedAgg(column="Defense", aggfunc="max"),
-        Min_Defense=pd.NamedAgg(column="Defense", aggfunc="min"),
-        Avg_SpAtk=pd.NamedAgg(column="SpAtk", aggfunc="mean"),
-        Max_SpAtk=pd.NamedAgg(column="SpAtk", aggfunc="max"),
-        Min_SpAtk=pd.NamedAgg(column="SpAtk", aggfunc="min"),
-        Avg_SpDef=pd.NamedAgg(column="SpDef", aggfunc="mean"),
-        Max_SpDef=pd.NamedAgg(column="SpDef", aggfunc="max"),
-        Min_SpDef=pd.NamedAgg(column="SpDef", aggfunc="min"),
-        Avg_Speed=pd.NamedAgg(column="Speed", aggfunc="mean"),
-        Max_Speed=pd.NamedAgg(column="Speed", aggfunc="max"),
-        Min_Speed=pd.NamedAgg(column="Speed", aggfunc="min"),
+        Count=pd.NamedAgg(column="isBase",aggfunc="sum"),
+        Mega_Count=pd.NamedAgg(column="isMega",aggfunc="sum"),
+        Alternate_Form_Count=pd.NamedAgg(column="isAlternate",aggfunc="sum"),
+        Total_Count=pd.NamedAgg(column="Name",aggfunc="count"),
+        Avg_HP=pd.NamedAgg(column="Base_HP", aggfunc="mean"),
+        Max_HP=pd.NamedAgg(column="Base_HP", aggfunc="max"),
+        Min_HP=pd.NamedAgg(column="Base_HP", aggfunc="min"),
+        Avg_Attack=pd.NamedAgg(column="Base_Attack", aggfunc="mean"),
+        Max_Attack=pd.NamedAgg(column="Base_Attack", aggfunc="max"),
+        Min_Attack=pd.NamedAgg(column="Base_Attack", aggfunc="min"),
+        Avg_Defense=pd.NamedAgg(column="Base_Defense", aggfunc="mean"),
+        Max_Defense=pd.NamedAgg(column="Base_Defense", aggfunc="max"),
+        Min_Defense=pd.NamedAgg(column="Base_Defense", aggfunc="min"),
+        Avg_SpAtk=pd.NamedAgg(column="Base_SpAtk", aggfunc="mean"),
+        Max_SpAtk=pd.NamedAgg(column="Base_SpAtk", aggfunc="max"),
+        Min_SpAtk=pd.NamedAgg(column="Base_SpAtk", aggfunc="min"),
+        Avg_SpDef=pd.NamedAgg(column="Base_SpDef", aggfunc="mean"),
+        Max_SpDef=pd.NamedAgg(column="Base_SpDef", aggfunc="max"),
+        Min_SpDef=pd.NamedAgg(column="Base_SpDef", aggfunc="min"),
+        Avg_Speed=pd.NamedAgg(column="Base_Speed", aggfunc="mean"),
+        Max_Speed=pd.NamedAgg(column="Base_Speed", aggfunc="max"),
+        Min_Speed=pd.NamedAgg(column="Base_Speed", aggfunc="min"),
     )
+
+    df = stats_df.drop(stats_df.filter(like='Base_').columns, axis=1)
+
     return stats_df
 
 class PokemonService:
@@ -52,13 +66,17 @@ class PokemonService:
             self._df = filtered_df
             return self
     
-    def generation(self,generation):
+    def generation(self,generation,show_variant):
         if not generation:
             stats_df = get_generation_stats(self._df_full)
             self._df = stats_df
         else:
-            filter = self._df_full["Generation"] == generation
-            self._df = self._df_full[filter]
+            filter1 = self._df_full["Generation"] == generation
+            if show_variant:
+                filter2 = self._df_full["isBase"] | self._df_full["isVariant"]
+            else:
+                filter2 = self._df_full["isBase"]
+            self._df = self._df_full[filter1 & filter2]
         return self
 
     def json_response(self):

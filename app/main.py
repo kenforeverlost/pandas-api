@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
@@ -10,10 +11,15 @@ async def lifespan(app: FastAPI):
     #startup events
     app.state.sales_df = pd.read_csv(DATA_PATH / "Sales.csv", parse_dates=True, index_col=0).dropna(how="all").sort_index()
 
-    pkmn_df = pd.read_csv(DATA_PATH / "pokemon-data.csv", index_col=0).dropna(how="all").sort_index()
+    pkmn_df = pd.read_csv(DATA_PATH / "pokemon-data.csv").dropna(how="all")
     pkmn_df['Type1'] = pkmn_df['Type1'].astype("category")
     pkmn_df['Type2'] = pkmn_df['Type2'].astype("category")
     pkmn_df["isMonotype"] = pkmn_df["Type2"].isnull()
+    pkmn_df["isVariant"] = pkmn_df.duplicated(subset=['Num'], keep='first')
+    pkmn_df["isBase"] = (~pkmn_df["isVariant"])
+    pkmn_df["isAlternate"] = (pkmn_df["isVariant"]) & (~pkmn_df["Name"].str.contains("Mega"))
+    pkmn_df["isMega"] = (pkmn_df["isVariant"]) & (pkmn_df["Name"].str.contains("Mega"))
+
     app.state.pkmn_df = pkmn_df
 
     pkmn_move_df = pd.read_csv(DATA_PATH / "move-data.csv", index_col=0).dropna(how="all").sort_index()

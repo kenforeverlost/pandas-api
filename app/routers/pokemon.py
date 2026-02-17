@@ -42,11 +42,12 @@ async def read_moves_by_contest(request: Request,filter: str = Query(None)):
 @router.get("/generation")
 async def read_pokemon_by_generation(
     request: Request,
-    generation: int = Query(None)
+    generation: int = Query(None),
+    show_variant: bool = Query(False)
 ):
     df = request.app.state.pkmn_df
     data = PokemonService(df)
-    return data.generation(generation).json_response()
+    return data.generation(generation,show_variant).json_response()
 
 @router.get("/{name}")
 async def read_pokemon(request: Request,name: str):
